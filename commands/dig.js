@@ -1,3 +1,5 @@
+export const description = "Look up DNS information for a host";
+
 export async function execute(args) {
     if (args.length === 0) {
         window.term.write('\r\ndig: missing host\r\n\r$ ');
