@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>maroku.sh</title>
     <meta charset="utf-8" />
@@ -108,157 +108,79 @@
             }
         });
         
-function executeCommand(command) {
-            const parts = command.split(' ');
-            const cmd = parts[0].toLowerCase();
-            const args = parts.slice(1);
-            
-            switch (cmd) {
-                case 'dig':
-                    dig(args);
-                    break;
-                case 'ping':
-                    ping(args);
-                    break;
-                case 'clear':
-                    clear();
-                    break;
-                case 'help':
-                    help();
-                    break;
-                case 'exit':
-                    exit();
-                    break;
-                case '':
-                    // Empty command, do nothing
-                    term.write('\r$ ');
-                    break;
-                default:
-                    term.write('\r\nCommand not found: ' + cmd + '\r\n\r$ ');
-                    break;
-            }
+async function executeCommand(command) {
+    const parts = command.split(' ');
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    if (cmd === '') {
+        term.write('\r$ ');
+        return;
+    }
+
+    // Handle built-in commands that don't need external files
+    if (cmd === 'clear') {
+        clear();
+        return;
+    }
+    if (cmd === 'exit') {
+        exit();
+        return;
+    }
+    if (cmd === 'help') {
+        await help(); // Help will now be async to fetch command list
+        return;
+    }
+
+    try {
+        // Dynamically import the command module
+        // Note: This assumes files are named commands/cmd_name.js
+        const module = await import(`./commands/${cmd}.js`);
+        if (module && typeof module.execute === 'function') {
+            await module.execute(args);
+        } else {
+            throw new Error('Invalid command module');
         }
+    } catch (err) {
+        term.write(`\r\nCommand not found: ${cmd}\r\n\r$ `);
+    }
+}
         
-function dig(args) {
-            if (args.length === 0) {
-                term.write('\r\ndig: missing host\r\n\r$ ');
-                return;
-            }
-            
-            const host = args[0];
-            term.write('\r\ndigging ' + host + '...\r\n');
-            
-            // Use Google DNS over HTTPS (CORS-friendly)
-            fetch('https://dns.google/resolve?name=' + encodeURIComponent(host))
-                .then(response => {
-                    if (!response.ok) throw new Error('DNS query failed');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.Answer && data.Answer.length > 0) {
-                        const answer = data.Answer.find(a => a.type === 1); // A record
-                        if (answer) {
-                            term.write(';; Got answer:\r\n');
-                            term.write(';; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: ' + Math.floor(Math.random() * 10000) + '\r\n');
-                            term.write(';; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\r\n');
-                            term.write('\r\n');
-                            term.write(';; OPT PSEUDOSECTION:\r\n');
-                            term.write('; EDNS: version 0; flags: ; udp: 512\r\n');
-                            term.write('\r\n');
-                            term.write(';; ANSWER SECTION:\r\n');
-                            term.write(host + '.\t3600\tIN\tA\t' + answer.data + '\r\n');
-                            term.write('\r\n');
-                            term.write(';; Query time: 45 msec\r\n');
-                            term.write(';; SERVER: 8.8.8.8#53(8.8.8.8)\r\n');
-                            const now = new Date();
-                            term.write(';; WHEN: ' + now.toUTCString() + '\r\n');
-                            term.write(';; MSG SIZE  rcvd: 45\r\n');
-                            term.write('\r$ ');
-} else {
-                        term.write(';; NO A RECORD FOUND FOR ' + host + '\r\n\r$ ');
-                    }
-                } else {
-                    term.write(';; FAILED TO RESOLVE ' + host + '\r\n\r$ ');
-                }
-            })
-            .catch(err => {
-                    term.write('\r\ndig: failed to resolve ' + host + ': ' + err.message + '\r\n\r$ ');
-                });
+async function help() {
+    term.write('\r\nAvailable commands:\r\n');
+    try {
+        const response = await fetch('./commands/manifest.json');
+        if (!response.ok) throw new Error('Could not load manifest');
+        const commands = await response.json();
+        
+        for (const command of commands) {
+            term.write(`  ${command.name.padEnd(15)} - ${command.desc}\r\n`);
         }
+    } catch (err) {
+        term.write('  (Error loading command list)\r\n');
+    }
+    
+    term.write('  clear            - Clear the terminal screen\r\n');
+    term.write('  help             - Show this help message\r\n');
+    term.write('  exit             - Close this tab/window\r\n');
+    term.write('\r$ ');
+}
         
-        function ping(args) {
-            if (args.length === 0) {
-                term.write('\r\nping: missing hostname\r\n\r$ ');
-                return;
-            }
-            
-            const host = args[0];
-            term.write('\r\nPING ' + host + ' (' + host + ') 56(84) bytes of data.\r\n');
-            
-            // Check connectivity using fetch (works for HTTP/HTTPS hosts)
-            const startTime = Date.now();
-            
-            fetch('https://' + host, { method: 'HEAD', mode: 'no-cors', timeout: 3000 })
-                .then(() => {
-                    const endTime = Date.now();
-                    const rtt = endTime - startTime;
-                    
-                    // Show ping responses
-                    for (let i = 0; i < 4; i++) {
-                        setTimeout(() => {
-                            term.write('64 bytes from ' + host + ': icmp_seq=' + (i+1) + ' ttl=64 time=' + rtt + ' ms\r\n');
-                        }, i * 50);
-                    }
-                    
-                    // Show summary after all responses
-                    setTimeout(() => {
-                        term.write('\r\n--- ' + host + ' ping statistics ---\r\n');
-                        term.write('4 packets transmitted, 4 received, 0% packet loss, time ' + (rtt * 4) + 'ms\r\n');
-                        term.write('rtt min/avg/max/mdev = ' + rtt + '/' + rtt + '/' + rtt + '/0.000 ms\r\n');
-                        term.write('\r$ ');
-                    }, 250);
-                })
-                .catch(err => {
-                    // Show failure responses
-                    for (let i = 0; i < 4; i++) {
-                        setTimeout(() => {
-                            term.write('Request failed: host unreachable\r\n');
-                        }, i * 50);
-                    }
-                    
-                    setTimeout(() => {
-                        term.write('\r\n--- ' + host + ' ping statistics ---\r\n');
-                        term.write('4 packets transmitted, 0 received, 100% packet loss, time ' + (Date.now() - startTime) + 'ms\r\n');
-                        term.write('\r$ ');
-                    }, 250);
-});
-        }
+function exit() {
+    window.close();
+}
         
-        function help() {
-            term.write('\r\nAvailable commands:\r\n');
-            term.write('  dig <host>       - Look up DNS information for a host\r\n');
-            term.write('  ping <host>      - Test network connectivity to a host\r\n');
-            term.write('  clear            - Clear the terminal screen\r\n');
-            term.write('  help             - Show this help message\r\n');
-            term.write('  exit             - Close this tab/window\r\n');
-            term.write('\r$ ');
-        }
+function clear() {
+    term.clear();
+    term.write('\r$ ');
+}
         
-        function exit() {
-            window.close();
-        }
-        
-        function clear() {
-            term.clear();
-            term.write('\r$ ');
-        }
-        
-        // Show banner on load
-        const now = new Date();
-        const pacificTime = now.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
-        term.write('\r\n');
-        term.write('  Welcome to maroku.sh - Pacific Time: ' + pacificTime + '\r\n\r\n');
-        term.write('  Type help to see available commands.\r\n\r\n$ ');
+// Show banner on load
+const now = new Date();
+const pacificTime = now.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles' });
+term.write('\r\n');
+term.write('  Welcome to maroku.sh - Pacific Time: ' + pacificTime + '\r\n\r\n');
+term.write('  Type help to see available commands.\r\n\r\n$ ');
     </script>
   </body>
 </html>

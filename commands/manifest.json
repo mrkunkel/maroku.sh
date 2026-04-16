@@ -1,0 +1,10 @@
+[
+  {
+    "name": "dig",
+    "desc": "Look up DNS information for a host"
+  },
+  {
+    "name": "ping",
+    "desc": "Test network connectivity to a host"
+  }
+]
