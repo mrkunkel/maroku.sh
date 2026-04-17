@@ -1,3 +1,5 @@
+export const description = "Test network connectivity to a host";
+
 export async function execute(args) {
     if (args.length === 0) {
         window.term.write('\r\nping: missing hostname\r\n\r$ ');

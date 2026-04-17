@@ -44,6 +44,9 @@
         
         // Current input line
         let currentInput = '';
+
+        // List of available external commands
+        const COMMANDS = ['dig', 'ping'];
         
         // Add event listener for keyboard input
         term.onData((data) => {
@@ -148,16 +151,17 @@ async function executeCommand(command) {
         
 async function help() {
     term.write('\r\nAvailable commands:\r\n');
-    try {
-        const response = await fetch('./commands/manifest.json');
-        if (!response.ok) throw new Error('Could not load manifest');
-        const commands = await response.json();
-        
-        for (const command of commands) {
-            term.write(`  ${command.name.padEnd(15)} - ${command.desc}\r\n`);
+    
+    // Load descriptions from the command modules themselves
+    for (const cmdName of COMMANDS) {
+        try {
+            const module = await import(`./commands/${cmdName}.js`);
+            const desc = module.description || "No description available";
+            term.write(`  ${cmdName.padEnd(15)} - ${desc}\r\n`);
+        } catch (err) {
+            // If a command in the list fails to load, skip it or show error
+            term.write(`  ${cmdName.padEnd(15)} - (Error loading description)\r\n`);
         }
-    } catch (err) {
-        term.write('  (Error loading command list)\r\n');
     }
     
     term.write('  clear            - Clear the terminal screen\r\n');
