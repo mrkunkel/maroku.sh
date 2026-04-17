@@ -145,6 +145,7 @@ async function executeCommand(command) {
             throw new Error('Invalid command module');
         }
     } catch (err) {
+        console.error("Error executing command:", err);
         term.write(`\r\nCommand not found: ${cmd}\r\n\r$ `);
     }
 }
@@ -159,6 +160,7 @@ async function help() {
             const desc = module.description || "No description available";
             term.write(`  ${cmdName.padEnd(15)} - ${desc}\r\n`);
         } catch (err) {
+            console.error(`Error loading help for ${cmdName}:`, err);
             // If a command in the list fails to load, skip it or show error
             term.write(`  ${cmdName.padEnd(15)} - (Error loading description)\r\n`);
         }
