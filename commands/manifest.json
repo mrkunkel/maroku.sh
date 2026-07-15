@@ -1,10 +1,9 @@
 [
-  {
-    "name": "dig",
-    "desc": "Look up DNS information for a host"
-  },
-  {
-    "name": "ping",
-    "desc": "Test network connectivity to a host"
-  }
+  { "name": "dig", "type": "command", "desc": "Look up DNS information for a host" },
+  { "name": "ifconfig", "type": "command", "desc": "Show network interface configuration" },
+  { "name": "ls", "type": "command", "desc": "List directory contents" },
+  { "name": "ping", "type": "command", "desc": "Test network connectivity to a host" },
+  { "name": "tetris", "type": "app", "desc": "A classic block-stacking game" },
+  { "name": "uname", "type": "command", "desc": "Print system information" },
+  { "name": "whoami", "type": "command", "desc": "Print current user" }
 ]

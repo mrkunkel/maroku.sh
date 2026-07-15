@@ -45,8 +45,8 @@
         // Current input line
         let currentInput = '';
 
-        // List of available external commands
-        const COMMANDS = ['dig', 'ping'];
+        // Command and app registry — loaded from manifest.json
+        let registry = [];
         
         // Add event listener for keyboard input
         term.onData((data) => {
@@ -111,9 +111,21 @@
             }
         });
         
+async function loadRegistry() {
+    try {
+        const response = await fetch('./commands/manifest.json');
+        registry = await response.json();
+    } catch (err) {
+        console.error('Failed to load command registry:', err);
+        registry = [];
+    }
+}
+
 async function executeCommand(command) {
     const parts = command.split(' ');
-    const cmd = parts[0].toLowerCase();
+    let cmd = parts[0].toLowerCase();
+    // Strip ./ prefix so ./tetris maps to tetris
+    cmd = cmd.replace(/^\.\//, '');
     const args = parts.slice(1);
 
     if (cmd === '') {
@@ -135,35 +147,95 @@ async function executeCommand(command) {
         return;
     }
 
-    try {
-        // Dynamically import the command module
-        // Note: This assumes files are named commands/cmd_name.js
-        const module = await import(`./commands/${cmd}.js`);
-        if (module && typeof module.execute === 'function') {
-            await module.execute(args);
-        } else {
-            throw new Error('Invalid command module');
-        }
-    } catch (err) {
-        console.error("Error executing command:", err);
+    // Check if this is a registered command or app
+    const entry = registry.find(r => r.name === cmd);
+    if (!entry) {
         term.write(`\r\nCommand not found: ${cmd}\r\n\r$ `);
+        return;
+    }
+
+    // Terminal commands (type: "command")
+    if (entry.type === 'command') {
+        try {
+            const module = await import(`./commands/${cmd}.js`);
+            if (module && typeof module.execute === 'function') {
+                await module.execute(args);
+            } else {
+                throw new Error('Invalid command module');
+            }
+        } catch (err) {
+            console.error("Error executing command:", err);
+            term.write(`\r\nCommand error: ${cmd}\r\n\r$ `);
+        }
+        return;
+    }
+
+    // Apps (type: "app")
+    if (entry.type === 'app') {
+        try {
+            const module = await import(`./commands/${cmd}.js`);
+            if (module && typeof module.execute === 'function') {
+                await launchApp(cmd, module, args);
+            } else {
+                throw new Error('Invalid app module');
+            }
+        } catch (err) {
+            console.error("Error launching app:", err);
+            term.write(`\r\nFailed to launch ${cmd}\r\n\r$ `);
+        }
+        return;
     }
 }
         
+let appContainer = null;
+
+async function launchApp(name, module, args) {
+    // Hide terminal
+    term.write('\r\n');
+    document.getElementById('terminal').style.display = 'none';
+    
+    // Create app container
+    appContainer = document.createElement('div');
+    appContainer.id = 'app-container';
+    appContainer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:1000;';
+    
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'app-close';
+    closeBtn.innerHTML = '&#10005;';
+    closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;background:rgba(255,0,0,0.7);color:white;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;z-index:1001;';
+    closeBtn.title = 'Exit app';
+    closeBtn.addEventListener('click', () => {
+        if (module.onExit) module.onExit();
+        restoreTerminal();
+    });
+    
+    appContainer.appendChild(closeBtn);
+    document.body.appendChild(appContainer);
+    
+    // Launch app
+    await module.execute(args, appContainer, () => {
+        if (module.onExit) module.onExit();
+        restoreTerminal();
+    });
+}
+
+function restoreTerminal() {
+    if (appContainer) {
+        appContainer.remove();
+        appContainer = null;
+    }
+    document.getElementById('terminal').style.display = '';
+    term.write('\r$ ');
+    term.focus();
+}
+
 async function help() {
     term.write('\r\nAvailable commands:\r\n');
     
-    // Load descriptions from the command modules themselves
-    for (const cmdName of COMMANDS) {
-        try {
-            const module = await import(`./commands/${cmdName}.js`);
-            const desc = module.description || "No description available";
-            term.write(`  ${cmdName.padEnd(15)} - ${desc}\r\n`);
-        } catch (err) {
-            console.error(`Error loading help for ${cmdName}:`, err);
-            // If a command in the list fails to load, skip it or show error
-            term.write(`  ${cmdName.padEnd(15)} - (Error loading description)\r\n`);
-        }
+    for (const entry of registry) {
+        const desc = entry.desc || "No description available";
+        term.write(`  ${entry.name.padEnd(15)} - ${desc}\r\n`);
     }
     
     term.write('  clear            - Clear the terminal screen\r\n');
@@ -187,6 +259,9 @@ const pacificTime = now.toLocaleTimeString('en-US', { timeZone: 'America/Los_Ang
 term.write('\r\n');
 term.write('  Welcome to maroku.sh - Pacific Time: ' + pacificTime + '\r\n\r\n');
 term.write('  Type help to see available commands.\r\n\r\n$ ');
+
+// Load command registry on startup
+loadRegistry();
     </script>
   </body>
 </html>
