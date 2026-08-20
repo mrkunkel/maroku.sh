@@ -62,25 +62,11 @@ export function execute(container, onExit) {
     container.appendChild(canvasWrapper);
 
     // Mouse wheel control — listen on window, not just canvas
-    window.addEventListener('wheel', (e) => {
-        if (isPaused) return;
-        e.preventDefault();
-        playerY += e.deltaY * 0.15;
-        // Clamp to court
-        if (playerY < 0) playerY = 0;
-        if (playerY + PADDLE_HEIGHT > COURT_HEIGHT) playerY = COURT_HEIGHT - PADDLE_HEIGHT;
-    }, { passive: false });
+    window.addEventListener('wheel', handleWheel, { passive: false });
 
     // Auto-pause on window blur, resume on focus
-    window.addEventListener('blur', () => {
-        isPaused = true;
-        document.getElementById('pong-heading').textContent = 'PAUSED';
-    });
-
-    window.addEventListener('focus', () => {
-        isPaused = false;
-        document.getElementById('pong-heading').textContent = 'PONG';
-    });
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
 
     // Instructions
     const instructions = document.createElement('p');
@@ -94,7 +80,29 @@ export function execute(container, onExit) {
     startGameLoop();
 }
 
+function handleWheel(e) {
+    if (isPaused) return;
+    e.preventDefault();
+    playerY += e.deltaY * 0.15;
+    // Clamp to court
+    if (playerY < 0) playerY = 0;
+    if (playerY + PADDLE_HEIGHT > COURT_HEIGHT) playerY = COURT_HEIGHT - PADDLE_HEIGHT;
+}
+
+function handleBlur() {
+    isPaused = true;
+    document.getElementById('pong-heading').textContent = 'PAUSED';
+}
+
+function handleFocus() {
+    isPaused = false;
+    document.getElementById('pong-heading').textContent = 'PONG';
+}
+
 export function onExit() {
+    window.removeEventListener('wheel', handleWheel);
+    window.removeEventListener('blur', handleBlur);
+    window.removeEventListener('focus', handleFocus);
     if (animationId) {
         cancelAnimationFrame(animationId);
         animationId = null;
