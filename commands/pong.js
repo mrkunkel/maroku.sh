@@ -145,6 +145,17 @@ function update() {
         if (aiY + PADDLE_HEIGHT > COURT_HEIGHT) aiY = COURT_HEIGHT - PADDLE_HEIGHT;
     }
 
+    // Scoring
+    if (ballX + BALL_RADIUS < 0) {
+        // Ball crossed left edge — AI scores
+        aiScore++;
+        resetBall(-1);  // Serve toward left (player) — the winner
+    } else if (ballX - BALL_RADIUS > COURT_WIDTH) {
+        // Ball crossed right edge — player scores
+        playerScore++;
+        resetBall(1);  // Serve toward right (AI) — the winner
+    }
+
     // Top wall bounce
     if (ballY - BALL_RADIUS <= 0) {
         ballY = BALL_RADIUS;  // Position correction — clamp inside
@@ -173,6 +184,20 @@ function handlePaddleHit(direction, paddleY) {
 
     // Increase speed
     ballSpeed += BALL_SPEED_INCREMENT;
+}
+
+function resetBall(serveDirection) {
+    // serveDirection: 1 = serve toward right (player scored), -1 = serve toward left (AI scored)
+    ballX = COURT_WIDTH / 2;
+    ballY = COURT_HEIGHT / 2;
+    ballSpeed = BASE_SPEED;
+
+    // Horizontal direction: toward the side that just scored
+    ballVX = serveDirection * BASE_SPEED / Math.SQRT2;
+
+    // Preserve vertical velocity direction from before the score
+    const vySign = ballVY >= 0 ? 1 : -1;
+    ballVY = vySign * BASE_SPEED / Math.SQRT2;
 }
 
 function draw() {
