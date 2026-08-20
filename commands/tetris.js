@@ -1,3 +1,5 @@
+import { createGameUI } from './game-ui.js';
+
 export const type = 'app';
 export const title = 'Tetris';
 export const description = 'A classic block-stacking game';
@@ -22,6 +24,7 @@ const SHAPES = [
 
 const COLORS = ['#00f0f0', '#f0f000', '#a000f0', '#f0a000', '#0000f0', '#00f000', '#f00000'];
 
+// Game state
 let canvas, ctx;
 let bgCanvas, bgCtx;
 let board, currentX, currentY, currentShape, currentColor;
@@ -32,22 +35,25 @@ export function execute(args, container, onExit) {
     const boardWidth = COLS * BLOCK_SIZE;
     const boardHeight = ROWS * BLOCK_SIZE;
 
-    // Centering wrapper
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
+    const { wrapper, heading, addCleanup } = createGameUI({
+        title: 'TETRIS',
+        width: boardWidth + PANEL_WIDTH,
+        height: boardHeight,
+    });
 
-    // Create background canvas for static elements
+    // Background canvas for static elements
     bgCanvas = document.createElement('canvas');
     bgCanvas.width = boardWidth + PANEL_WIDTH;
     bgCanvas.height = boardHeight;
     bgCtx = bgCanvas.getContext('2d');
     drawStaticBoard();
 
-    // Create main canvas for dynamic elements
+    // Main canvas for dynamic elements
     canvas = document.createElement('canvas');
     canvas.width = boardWidth + PANEL_WIDTH;
     canvas.height = boardHeight;
     canvas.style.cssText = 'display:block;';
+
     wrapper.appendChild(canvas);
 
     container.appendChild(wrapper);
@@ -58,14 +64,21 @@ export function execute(args, container, onExit) {
 
     initGame();
 
-    document.addEventListener('keydown', handleKeyDown);
+    const keyDownHandler = (e) => handleKeyDown(e);
+    document.addEventListener('keydown', keyDownHandler);
 
     window._tetrisCleanup = () => {
-        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('keydown', keyDownHandler);
         if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
         if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
         if (bgCanvas && bgCanvas.parentNode) bgCanvas.parentNode.removeChild(bgCanvas);
     };
+    addCleanup(() => {
+        if (window._tetrisCleanup) {
+            window._tetrisCleanup();
+            delete window._tetrisCleanup;
+        }
+    });
 }
 
 export function onExit() {

@@ -1,3 +1,5 @@
+import { createGameUI } from './game-ui.js';
+
 export const type = 'app';
 export const title = 'Space Invaders';
 export const description = 'A classic Space Invaders game';
@@ -27,7 +29,6 @@ const START_INVADER_Y = 60;
 
 // Colors
 const COLOR_BG = '#000';
-const COLOR_BORDER = '#FFF';
 const COLOR_PLAYER = '#FFF';
 const COLOR_BULLET = '#FFF';
 const COLOR_TEXT = '#FFF';
@@ -116,25 +117,19 @@ let invaderDirection = 1;
 let invaderAnimationFrame = 0;
 let baseSpeed = INVADER_BASE_SPEED;
 let isMouseDown = false;
-let handleMouseDown, handleMouseUp;
 
-export function execute(args, container) {
-    // Centering wrapper
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
-
-    // Heading
-    const heading = document.createElement('h1');
-    heading.id = 'invaders-heading';
-    heading.style.cssText = 'color:' + COLOR_TEXT + ';font-size:32px;margin:0 0 10px 0;font-family:monospace;';
-    heading.textContent = 'SPACE INVADERS';
-    wrapper.appendChild(heading);
+export function execute(args, container, onExit) {
+    const { wrapper, heading, addCleanup } = createGameUI({
+        title: 'SPACE INVADERS',
+        width: CANVAS_WIDTH,
+        height: CANVAS_HEIGHT,
+    });
 
     // Canvas
     canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
-    canvas.style.cssText = 'background:' + COLOR_BG + ';border:4px solid ' + COLOR_BORDER + ';box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
+    canvas.style.cssText = 'background:' + COLOR_BG + ';border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
     wrapper.appendChild(canvas);
 
     container.appendChild(wrapper);
@@ -142,16 +137,18 @@ export function execute(args, container) {
     ctx = canvas.getContext('2d');
 
     // Mouse tracking
-    canvas.addEventListener('mousemove', (e) => {
+    const mouseMoveHandler = (e) => {
         const rect = canvas.getBoundingClientRect();
         const rawX = e.clientX - rect.left;
         const rawY = e.clientY - rect.top;
         playerX = Math.max(PLAYER_WIDTH / 2, Math.min(CANVAS_WIDTH - PLAYER_WIDTH / 2, rawX));
         playerY = Math.max(PLAYER_MIN_Y, Math.min(CANVAS_HEIGHT - 10, rawY));
-    });
+    };
+    canvas.addEventListener('mousemove', mouseMoveHandler);
+    addCleanup(() => canvas.removeEventListener('mousemove', mouseMoveHandler));
 
     // Mouse button for hold-to-fire
-    const handleMouseDown = (e) => {
+    const mouseDownHandler = (e) => {
         e.preventDefault();
         isMouseDown = true;
         if (gameState === 'start') {
@@ -164,40 +161,41 @@ export function execute(args, container) {
             baseSpeed = INVADER_BASE_SPEED;
             initGame();
             gameState = 'playing';
-            document.getElementById('invaders-heading').textContent = 'SPACE INVADERS';
+            heading.textContent = 'SPACE INVADERS';
         }
     };
 
-    const handleMouseUp = () => {
+    const mouseUpHandler = () => {
         isMouseDown = false;
     };
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mouseup', handleMouseUp);
-
-    canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('mousedown', mouseDownHandler);
+    canvas.addEventListener('mouseup', mouseUpHandler);
+    canvas.addEventListener('click', () => {});
 
     // Auto-pause on window blur
-    window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
+    const blurHandler = () => {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+            heading.textContent = 'PAUSED';
+        }
+    };
+    const focusHandler = () => {
+        if (gameState === 'paused') {
+            gameState = 'playing';
+            heading.textContent = 'SPACE INVADERS';
+            lastInvaderBulletTime = performance.now();
+        }
+    };
+    window.addEventListener('blur', blurHandler);
+    window.addEventListener('focus', focusHandler);
+    addCleanup(() => {
+        window.removeEventListener('blur', blurHandler);
+        window.removeEventListener('focus', focusHandler);
+    });
 
     initInvaders();
     gameLoop();
-}
-
-function handleBlur() {
-    if (gameState === 'playing') {
-        gameState = 'paused';
-        document.getElementById('invaders-heading').textContent = 'PAUSED';
-    }
-}
-
-function handleFocus() {
-    if (gameState === 'paused') {
-        gameState = 'playing';
-        document.getElementById('invaders-heading').textContent = 'SPACE INVADERS';
-        lastInvaderBulletTime = performance.now();
-    }
 }
 
 function handleClick() {
@@ -327,7 +325,6 @@ function updateInvaders() {
         if (!invader.alive) continue;
         if (invader.y + 24 >= BOTTOM_Y) {
             gameState = 'gameover';
-            document.getElementById('invaders-heading').textContent = 'GAME OVER';
             return;
         }
     }
@@ -390,7 +387,6 @@ function checkCollisions() {
             if (lives <= 0) {
                 lives = 0;
                 gameState = 'gameover';
-                document.getElementById('invaders-heading').textContent = 'GAME OVER';
             }
         }
     }
@@ -521,10 +517,6 @@ function gameLoop() {
 }
 
 export function onExit() {
-    window.removeEventListener('blur', handleBlur);
-    window.removeEventListener('focus', handleFocus);
-    canvas.removeEventListener('mousedown', handleMouseDown);
-    canvas.removeEventListener('mouseup', handleMouseUp);
     if (animationId) {
         cancelAnimationFrame(animationId);
         animationId = null;

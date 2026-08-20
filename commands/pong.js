@@ -1,3 +1,5 @@
+import { createGameUI } from './game-ui.js';
+
 export const type = 'app';
 export const title = 'Pong';
 export const description = 'A classic Pong game';
@@ -14,13 +16,10 @@ const BALL_SPEED_INCREMENT = 0.2;
 const AI_DEAD_ZONE = 10;
 
 // Colors
-const COLOR_BG = '#222';
 const COLOR_COURT = '#000';
-const COLOR_BORDER = '#FFF';
 const COLOR_PLAYER = '#00FF00';
 const COLOR_AI = '#FF0000';
 const COLOR_BALL = '#FFF';
-const COLOR_TEXT = '#FFF';
 const COLOR_INSTRUCTIONS = '#aaa';
 
 // Game state
@@ -32,40 +31,72 @@ let playerScore, aiScore;
 
 export function execute(args, container, onExit) {
 
-    // Centering wrapper
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;font-family:sans-serif;';
+    const { wrapper, heading, addCleanup } = createGameUI({
+        title: 'PONG',
+        width: COURT_WIDTH,
+        height: COURT_HEIGHT,
+    });
 
-    // Heading
-    const heading = document.createElement('h1');
-    heading.id = 'pong-heading';
-    heading.style.cssText = 'color:' + COLOR_TEXT + ';font-size:32px;margin:0 0 10px 0;';
-    heading.textContent = 'PONG';
-    wrapper.appendChild(heading);
+    // Rebuild wrapper: heading + score + canvas
+    wrapper.innerHTML = '';
+    wrapper.style.fontFamily = 'sans-serif';
 
-    // Canvas wrapper (for cursor hiding)
-    const canvasWrapper = document.createElement('div');
-    canvasWrapper.style.cssText = 'position:relative;';
+    // Score display above canvas
+    const scoreDisplay = document.createElement('div');
+    scoreDisplay.style.cssText = 'color:#FFF;font-size:32px;font-weight:bold;margin:0 0 10px 0;letter-spacing:20px;';
+    scoreDisplay.textContent = '0 - 0';
+    wrapper.appendChild(scoreDisplay);
 
     // Canvas
     canvas = document.createElement('canvas');
     canvas.width = COURT_WIDTH;
     canvas.height = COURT_HEIGHT;
-    canvas.style.cssText = 'background:' + COLOR_COURT + ';border:4px solid ' + COLOR_BORDER + ';box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
+    canvas.style.cssText = 'background:' + COLOR_COURT + ';border:4px solid ' + '#FFF' + ';box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
+
+    // Canvas wrapper (for cursor hiding)
+    const canvasWrapper = document.createElement('div');
+    canvasWrapper.style.cssText = 'position:relative;';
     canvasWrapper.appendChild(canvas);
-
-    // Hide cursor over canvas
-    canvas.addEventListener('mouseenter', () => { canvas.style.cursor = 'none'; });
-    canvas.addEventListener('mouseleave', () => { canvas.style.cursor = ''; });
-
+    wrapper.appendChild(heading);
+    wrapper.appendChild(scoreDisplay);
     wrapper.appendChild(canvasWrapper);
 
-    // Mouse wheel control — listen on window, not just canvas
-    window.addEventListener('wheel', handleWheel, { passive: false });
+    // Hide cursor over canvas
+    const mouseEnter = () => { canvas.style.cursor = 'none'; };
+    const mouseLeave = () => { canvas.style.cursor = ''; };
+    canvas.addEventListener('mouseenter', mouseEnter);
+    canvas.addEventListener('mouseleave', mouseLeave);
+    addCleanup(() => {
+        canvas.removeEventListener('mouseenter', mouseEnter);
+        canvas.removeEventListener('mouseleave', mouseLeave);
+    });
 
-    // Auto-pause on window blur, resume on focus
-    window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
+    // Mouse wheel control
+    const wheelHandler = (e) => {
+        if (isPaused) return;
+        e.preventDefault();
+        playerY += e.deltaY * 0.15;
+        if (playerY < 0) playerY = 0;
+        if (playerY + PADDLE_HEIGHT > COURT_HEIGHT) playerY = COURT_HEIGHT - PADDLE_HEIGHT;
+    };
+    window.addEventListener('wheel', wheelHandler, { passive: false });
+    addCleanup(() => window.removeEventListener('wheel', wheelHandler));
+
+    // Auto-pause on blur, resume on focus
+    const blurHandler = () => {
+        isPaused = true;
+        heading.textContent = 'PAUSED';
+    };
+    const focusHandler = () => {
+        isPaused = false;
+        heading.textContent = 'PONG';
+    };
+    window.addEventListener('blur', blurHandler);
+    window.addEventListener('focus', focusHandler);
+    addCleanup(() => {
+        window.removeEventListener('blur', blurHandler);
+        window.removeEventListener('focus', focusHandler);
+    });
 
     // Instructions
     const instructions = document.createElement('p');
@@ -81,171 +112,101 @@ export function execute(args, container, onExit) {
     startGameLoop();
 }
 
-function handleWheel(e) {
-    if (isPaused) return;
-    e.preventDefault();
-    playerY += e.deltaY * 0.15;
-    // Clamp to court
-    if (playerY < 0) playerY = 0;
-    if (playerY + PADDLE_HEIGHT > COURT_HEIGHT) playerY = COURT_HEIGHT - PADDLE_HEIGHT;
-}
-
-function handleBlur() {
-    isPaused = true;
-    document.getElementById('pong-heading').textContent = 'PAUSED';
-}
-
-function handleFocus() {
-    isPaused = false;
-    document.getElementById('pong-heading').textContent = 'PONG';
-}
-
-export function onExit() {
-    window.removeEventListener('wheel', handleWheel);
-    window.removeEventListener('blur', handleBlur);
-    window.removeEventListener('focus', handleFocus);
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-}
-
 function initGame() {
-    // Paddles vertically centered
     playerY = (COURT_HEIGHT - PADDLE_HEIGHT) / 2;
     aiY = (COURT_HEIGHT - PADDLE_HEIGHT) / 2;
-
-    // Ball centered, moving bottom-right at 45 degrees
     ballX = COURT_WIDTH / 2;
     ballY = COURT_HEIGHT / 2;
     ballSpeed = BASE_SPEED;
-    ballVX = BASE_SPEED / Math.SQRT2;  // ~3.536
-    ballVY = BASE_SPEED / Math.SQRT2;  // ~3.536
-
-    // Scores
+    ballVX = BASE_SPEED / Math.SQRT2;
+    ballVY = BASE_SPEED / Math.SQRT2;
     playerScore = 0;
     aiScore = 0;
-
-    // Not paused
     isPaused = false;
-    document.getElementById('pong-heading').textContent = 'PONG';
+    scoreDisplay.textContent = '0 - 0';
 }
 
 function update() {
     if (isPaused) return;
 
-    // Move ball
     ballX += ballVX;
     ballY += ballVY;
 
-    // Player paddle collision (left side)
     if (ballVX < 0 && ballX - BALL_RADIUS <= PADDLE_WIDTH &&
         ballX + BALL_RADIUS >= 0 &&
         ballY >= playerY && ballY <= playerY + PADDLE_HEIGHT) {
         handlePaddleHit(1, playerY);
     }
 
-    // AI paddle collision (right side)
     if (ballVX > 0 && ballX + BALL_RADIUS >= COURT_WIDTH - PADDLE_WIDTH &&
         ballX - BALL_RADIUS <= COURT_WIDTH &&
         ballY >= aiY && ballY <= aiY + PADDLE_HEIGHT) {
         handlePaddleHit(-1, aiY);
     }
 
-    // AI paddle movement
     const aiCenter = aiY + PADDLE_HEIGHT / 2;
     const diff = ballY - aiCenter;
 
     if (Math.abs(diff) > AI_DEAD_ZONE) {
         const move = Math.sign(diff) * Math.min(PADDLE_SPEED, Math.abs(diff));
         aiY += move;
-        // Clamp to field
         if (aiY < 0) aiY = 0;
         if (aiY + PADDLE_HEIGHT > COURT_HEIGHT) aiY = COURT_HEIGHT - PADDLE_HEIGHT;
     }
 
-    // Scoring
     if (ballX + BALL_RADIUS < 0) {
-        // Ball crossed left edge — AI scores
         aiScore++;
-        resetBall(-1);  // Serve toward left (player) — the winner
+        scoreDisplay.textContent = playerScore + ' - ' + aiScore;
+        resetBall(-1);
     } else if (ballX - BALL_RADIUS > COURT_WIDTH) {
-        // Ball crossed right edge — player scores
         playerScore++;
-        resetBall(1);  // Serve toward right (AI) — the winner
+        scoreDisplay.textContent = playerScore + ' - ' + aiScore;
+        resetBall(1);
     }
 
-    // Top wall bounce
     if (ballY - BALL_RADIUS <= 0) {
-        ballY = BALL_RADIUS;  // Position correction — clamp inside
+        ballY = BALL_RADIUS;
         ballVY = -ballVY;
     }
 
-    // Bottom wall bounce
     if (ballY + BALL_RADIUS >= COURT_HEIGHT) {
-        ballY = COURT_HEIGHT - BALL_RADIUS;  // Position correction — clamp inside
+        ballY = COURT_HEIGHT - BALL_RADIUS;
         ballVY = -ballVY;
     }
 }
 
 function handlePaddleHit(direction, paddleY) {
-    // Normalize hit position: -1 (bottom edge) to +1 (top edge) relative to paddle center
     const relativeY = ((paddleY + PADDLE_HEIGHT / 2) - ballY) / (PADDLE_HEIGHT / 2);
     const clampedY = Math.max(-1, Math.min(1, relativeY));
-
-    // Outgoing angle = clampedY * π/4 (max ±45° from horizontal)
     const angle = clampedY * (Math.PI / 4);
-
-    // Ball always travels away from the paddle that was hit
-    // Note: canvas Y axis is flipped, so ballVY uses negative sign
     ballVX = direction * ballSpeed * Math.cos(angle);
     ballVY = -ballSpeed * Math.sin(angle);
-
-    // Increase speed
     ballSpeed += BALL_SPEED_INCREMENT;
 }
 
 function resetBall(serveDirection) {
-    // serveDirection: 1 = serve toward right (player scored), -1 = serve toward left (AI scored)
     ballX = COURT_WIDTH / 2;
     ballY = COURT_HEIGHT / 2;
     ballSpeed = BASE_SPEED;
-
-    // Horizontal direction: toward the side that just scored
     ballVX = serveDirection * BASE_SPEED / Math.SQRT2;
-
-    // Preserve vertical velocity direction from before the score
     const vySign = ballVY >= 0 ? 1 : -1;
     ballVY = vySign * BASE_SPEED / Math.SQRT2;
 }
 
 function draw() {
-    // Clear court
     ctx.fillStyle = COLOR_COURT;
     ctx.fillRect(0, 0, COURT_WIDTH, COURT_HEIGHT);
 
-    // Player paddle (left, green)
     ctx.fillStyle = COLOR_PLAYER;
     ctx.fillRect(0, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
 
-    // AI paddle (right, red)
     ctx.fillStyle = COLOR_AI;
     ctx.fillRect(COURT_WIDTH - PADDLE_WIDTH, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
 
-    // Ball (white circle)
     ctx.fillStyle = COLOR_BALL;
     ctx.beginPath();
     ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
     ctx.fill();
-
-    // Player score
-    ctx.fillStyle = COLOR_TEXT;
-    ctx.font = '35px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(playerScore.toString(), COURT_WIDTH / 4, COURT_HEIGHT / 5);
-
-    // AI score
-    ctx.fillText(aiScore.toString(), COURT_WIDTH * 3 / 4, COURT_HEIGHT / 5);
 }
 
 function startGameLoop() {
@@ -255,4 +216,11 @@ function startGameLoop() {
         animationId = requestAnimationFrame(loop);
     }
     loop();
+}
+
+export function onExit() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
 }

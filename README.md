@@ -6,21 +6,34 @@ A browser-based terminal for performing network tasks and launching interactive 
 
 - `dig <host>` - Look up DNS information for a host
 - `ping <host>` - Test network connectivity to a host
+- `ifconfig` - Show network interface configuration
+- `ls` - List directory contents
+- `uname` - Print system information
+- `whoami` - Print current user
 - `clear` - Clear the terminal screen
 - `help` - Show available commands
 - `exit` - Close this tab/window
-- Apps - Type an app name to launch it full-screen (e.g., `tetris`)
+- Apps - Type an app name to launch it full-screen (e.g., `tetris`, `pong`, `tictactoe`, `invaders`, `asteroids`)
 
 ## Project Structure
 
 ```
-index.html          # Main shell, xterm.js terminal, command routing
+index.html          # Main shell, terminal, command routing
 styles.css          # Terminal and app container styles
 commands/
   manifest.json     # Registry of all commands and apps
+  game-ui.js        # Shared game UI setup (wrapper, heading, canvas)
   ping.js           # Terminal command: ping a host
   dig.js            # Terminal command: DNS lookup
+  ifconfig.js       # Terminal command: network interfaces
+  ls.js             # Terminal command: list directory
+  uname.js          # Terminal command: system info
+  whoami.js         # Terminal command: current user
   tetris.js         # App: Tetris game
+  pong.js           # App: Pong (mouse wheel control)
+  tictactoe.js      # App: Two-player tic-tac-toe
+  invaders.js       # App: Space Invaders
+  asteroids.js      # App: Asteroids
 ```
 
 ## Adding a New App
@@ -28,20 +41,39 @@ commands/
 1. Create `commands/<name>.js` with the app module contract:
 
 ```javascript
+import { createGameUI } from './game-ui.js';
+
 export const type = 'app';
 export const title = 'My App';
 export const description = 'What my app does';
 
 export function execute(args, container, onExit) {
-    // Render your app into the container element
-    // The container is full-screen and ready for your content
+    const { wrapper, heading, addCleanup } = createGameUI({
+        title: 'MY APP',
+        width: 800,
+        height: 600,
+    });
+
+    // Create your canvas and add it to the wrapper
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    wrapper.appendChild(canvas);
+
+    container.appendChild(wrapper);
+
+    // Register cleanup functions to run on exit
+    addCleanup(() => {
+        // Remove event listeners, cancel animations, etc.
+    });
 }
 
 export function onExit() {
-    // Clean up your app when the user closes it
-    // Remove event listeners, cancel animations, etc.
+    // Called when the user clicks the X button
 }
 ```
+
+`createGameUI` provides a centered layout with a white heading above the game. Customize with options: `{ title, width, height, headingColor, headingFont, headingSize, canvasBg, canvasBorder, canvasBorderWidth, canvasBoxShadow, headingMargin }`.
 
 2. Add an entry to `commands/manifest.json`:
 

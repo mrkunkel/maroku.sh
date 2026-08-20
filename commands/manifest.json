@@ -7,6 +7,7 @@
   { "name": "uname", "type": "command", "desc": "Print system information" },
   { "name": "whoami", "type": "command", "desc": "Print current user" },
   { "name": "pong", "type": "app", "desc": "A classic Pong game" },
+  { "name": "tictactoe", "type": "app", "desc": "Two-player tic-tac-toe" },
   { "name": "invaders", "type": "app", "desc": "A classic Space Invaders game" },
   { "name": "asteroids", "type": "app", "desc": "A classic space-shooting game" }
 ]

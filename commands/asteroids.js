@@ -1,3 +1,5 @@
+import { createGameUI } from './game-ui.js';
+
 // Module exports
 export const type = 'app';
 export const title = 'Asteroids';
@@ -69,7 +71,6 @@ let asteroids = [];
 // Input tracking
 const keys = {};
 let lastBulletTime = 0;
-let onExitCallback = null;
 
 // ===== INPUT HANDLING =====
 
@@ -496,17 +497,11 @@ function gameLoop() {
 // ===== MODULE EXPORTS =====
 
 export function execute(args, container, onExit) {
-    onExitCallback = onExit;
-
-    // Centering wrapper
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
-
-    // Heading
-    const heading = document.createElement('h1');
-    heading.style.cssText = 'color:#FFF;font-family:monospace;font-size:32px;margin:0 0 10px 0;';
-    heading.textContent = 'ASTEROIDS';
-    wrapper.appendChild(heading);
+    const { wrapper, heading, addCleanup } = createGameUI({
+        title: 'ASTEROIDS',
+        width: CANVAS_WIDTH,
+        height: CANVAS_HEIGHT,
+    });
 
     // Canvas
     canvas = document.createElement('canvas');
@@ -521,21 +516,28 @@ export function execute(args, container, onExit) {
 
     initGame();
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
+    const keyDownHandler = (e) => handleKeyDown(e);
+    const keyUpHandler = (e) => handleKeyUp(e);
+    const blurHandler = () => handleBlur();
+    const focusHandler = () => handleFocus();
+
+    window.addEventListener('keydown', keyDownHandler);
+    window.addEventListener('keyup', keyUpHandler);
+    window.addEventListener('blur', blurHandler);
+    window.addEventListener('focus', focusHandler);
+
+    addCleanup(() => {
+        window.removeEventListener('keydown', keyDownHandler);
+        window.removeEventListener('keyup', keyUpHandler);
+        window.removeEventListener('blur', blurHandler);
+        window.removeEventListener('focus', focusHandler);
+    });
 
     gameState = 'start';
     animationId = requestAnimationFrame(gameLoop);
 }
 
 export function onExit() {
-    window.removeEventListener('keydown', handleKeyDown);
-    window.removeEventListener('keyup', handleKeyUp);
-    window.removeEventListener('blur', handleBlur);
-    window.removeEventListener('focus', handleFocus);
-
     if (animationId) {
         cancelAnimationFrame(animationId);
         animationId = null;
