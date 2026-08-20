@@ -34,15 +34,16 @@ let onExitCallback = null;
 export function execute(container, onExit) {
     onExitCallback = onExit;
 
-    // Page background
-    container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:' + COLOR_BG + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;font-family:sans-serif;';
+    // Centering wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;font-family:sans-serif;';
 
     // Heading
     const heading = document.createElement('h1');
     heading.id = 'pong-heading';
     heading.style.cssText = 'color:' + COLOR_TEXT + ';font-size:32px;margin:0 0 10px 0;';
     heading.textContent = 'PONG';
-    container.appendChild(heading);
+    wrapper.appendChild(heading);
 
     // Canvas wrapper (for cursor hiding)
     const canvasWrapper = document.createElement('div');
@@ -59,7 +60,7 @@ export function execute(container, onExit) {
     canvas.addEventListener('mouseenter', () => { canvas.style.cursor = 'none'; });
     canvas.addEventListener('mouseleave', () => { canvas.style.cursor = ''; });
 
-    container.appendChild(canvasWrapper);
+    wrapper.appendChild(canvasWrapper);
 
     // Mouse wheel control — listen on window, not just canvas
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -72,7 +73,9 @@ export function execute(container, onExit) {
     const instructions = document.createElement('p');
     instructions.style.cssText = 'color:' + COLOR_INSTRUCTIONS + ';font-size:14px;margin:10px 0 0 0;';
     instructions.innerHTML = 'Use <b>Mouse Wheel</b> to move your paddle';
-    container.appendChild(instructions);
+    wrapper.appendChild(instructions);
+
+    container.appendChild(wrapper);
 
     ctx = canvas.getContext('2d');
 
