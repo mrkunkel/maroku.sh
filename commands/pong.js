@@ -112,6 +112,26 @@ function initGame() {
     document.getElementById('pong-heading').textContent = 'PONG';
 }
 
+function update() {
+    if (isPaused) return;
+
+    // Move ball
+    ballX += ballVX;
+    ballY += ballVY;
+
+    // Top wall bounce
+    if (ballY - BALL_RADIUS <= 0) {
+        ballY = BALL_RADIUS;  // Position correction — clamp inside
+        ballVY = -ballVY;
+    }
+
+    // Bottom wall bounce
+    if (ballY + BALL_RADIUS >= COURT_HEIGHT) {
+        ballY = COURT_HEIGHT - BALL_RADIUS;  // Position correction — clamp inside
+        ballVY = -ballVY;
+    }
+}
+
 function draw() {
     // Clear court
     ctx.fillStyle = COLOR_COURT;
@@ -143,6 +163,7 @@ function draw() {
 
 function startGameLoop() {
     function loop() {
+        update();
         draw();
         animationId = requestAnimationFrame(loop);
     }
