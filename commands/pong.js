@@ -31,7 +31,7 @@ let playerY, aiY, ballX, ballY, ballVX, ballVY, ballSpeed;
 let playerScore, aiScore;
 let onExitCallback = null;
 
-export function execute(container, onExit) {
+export function execute(args, container, onExit) {
     onExitCallback = onExit;
 
     // Centering wrapper
