@@ -133,6 +133,18 @@ function update() {
         handlePaddleHit(-1, aiY);
     }
 
+    // AI paddle movement
+    const aiCenter = aiY + PADDLE_HEIGHT / 2;
+    const diff = ballY - aiCenter;
+
+    if (Math.abs(diff) > AI_DEAD_ZONE) {
+        const move = Math.sign(diff) * Math.min(PADDLE_SPEED, Math.abs(diff));
+        aiY += move;
+        // Clamp to field
+        if (aiY < 0) aiY = 0;
+        if (aiY + PADDLE_HEIGHT > COURT_HEIGHT) aiY = COURT_HEIGHT - PADDLE_HEIGHT;
+    }
+
     // Top wall bounce
     if (ballY - BALL_RADIUS <= 0) {
         ballY = BALL_RADIUS;  // Position correction — clamp inside
