@@ -33,6 +33,42 @@ let onExitCallback = null;
 
 export function execute(container, onExit) {
     onExitCallback = onExit;
+
+    // Page background
+    container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:' + COLOR_BG + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;font-family:sans-serif;';
+
+    // Heading
+    const heading = document.createElement('h1');
+    heading.id = 'pong-heading';
+    heading.style.cssText = 'color:' + COLOR_TEXT + ';font-size:32px;margin:0 0 10px 0;';
+    heading.textContent = 'PONG';
+    container.appendChild(heading);
+
+    // Canvas wrapper (for cursor hiding)
+    const canvasWrapper = document.createElement('div');
+    canvasWrapper.style.cssText = 'position:relative;';
+
+    // Canvas
+    canvas = document.createElement('canvas');
+    canvas.width = COURT_WIDTH;
+    canvas.height = COURT_HEIGHT;
+    canvas.style.cssText = 'background:' + COLOR_COURT + ';border:4px solid ' + COLOR_BORDER + ';box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
+    canvasWrapper.appendChild(canvas);
+
+    // Hide cursor over canvas
+    canvas.addEventListener('mouseenter', () => { canvas.style.cursor = 'none'; });
+    canvas.addEventListener('mouseleave', () => { canvas.style.cursor = ''; });
+
+    container.appendChild(canvasWrapper);
+
+    // Instructions
+    const instructions = document.createElement('p');
+    instructions.style.cssText = 'color:' + COLOR_INSTRUCTIONS + ';font-size:14px;margin:10px 0 0 0;';
+    instructions.innerHTML = 'Use <b>Mouse Wheel</b> to move your paddle';
+    container.appendChild(instructions);
+
+    ctx = canvas.getContext('2d');
+
     initGame();
     startGameLoop();
 }
@@ -49,6 +85,14 @@ function initGame() {
     // Will be filled in by subsequent tasks
 }
 
+function draw() {
+    ctx.clearRect(0, 0, COURT_WIDTH, COURT_HEIGHT);
+}
+
 function startGameLoop() {
-    // Will be filled in by subsequent tasks
+    function loop() {
+        draw();
+        animationId = requestAnimationFrame(loop);
+    }
+    loop();
 }
