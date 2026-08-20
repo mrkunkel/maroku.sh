@@ -189,7 +189,7 @@ function resetShip() {
 // ===== ASTEROID FUNCTIONS =====
 
 function createAsteroid(x, y, size) {
-    let radius, speed, speedMultiplier;
+    let radius, speedMultiplier;
 
     if (size === 'large') {
         radius = ASTEROID_LARGE_RADIUS;
