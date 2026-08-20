@@ -71,6 +71,17 @@ export function execute(container, onExit) {
         if (playerY + PADDLE_HEIGHT > COURT_HEIGHT) playerY = COURT_HEIGHT - PADDLE_HEIGHT;
     }, { passive: false });
 
+    // Auto-pause on window blur, resume on focus
+    window.addEventListener('blur', () => {
+        isPaused = true;
+        document.getElementById('pong-heading').textContent = 'PAUSED';
+    });
+
+    window.addEventListener('focus', () => {
+        isPaused = false;
+        document.getElementById('pong-heading').textContent = 'PONG';
+    });
+
     // Instructions
     const instructions = document.createElement('p');
     instructions.style.cssText = 'color:' + COLOR_INSTRUCTIONS + ';font-size:14px;margin:10px 0 0 0;';
