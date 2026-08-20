@@ -82,11 +82,53 @@ export function onExit() {
 }
 
 function initGame() {
-    // Will be filled in by subsequent tasks
+    // Paddles vertically centered
+    playerY = (COURT_HEIGHT - PADDLE_HEIGHT) / 2;
+    aiY = (COURT_HEIGHT - PADDLE_HEIGHT) / 2;
+
+    // Ball centered, moving bottom-right at 45 degrees
+    ballX = COURT_WIDTH / 2;
+    ballY = COURT_HEIGHT / 2;
+    ballSpeed = BASE_SPEED;
+    ballVX = BASE_SPEED / Math.SQRT2;  // ~3.536
+    ballVY = BASE_SPEED / Math.SQRT2;  // ~3.536
+
+    // Scores
+    playerScore = 0;
+    aiScore = 0;
+
+    // Not paused
+    isPaused = false;
+    document.getElementById('pong-heading').textContent = 'PONG';
 }
 
 function draw() {
-    ctx.clearRect(0, 0, COURT_WIDTH, COURT_HEIGHT);
+    // Clear court
+    ctx.fillStyle = COLOR_COURT;
+    ctx.fillRect(0, 0, COURT_WIDTH, COURT_HEIGHT);
+
+    // Player paddle (left, green)
+    ctx.fillStyle = COLOR_PLAYER;
+    ctx.fillRect(0, playerY, PADDLE_WIDTH, PADDLE_HEIGHT);
+
+    // AI paddle (right, red)
+    ctx.fillStyle = COLOR_AI;
+    ctx.fillRect(COURT_WIDTH - PADDLE_WIDTH, aiY, PADDLE_WIDTH, PADDLE_HEIGHT);
+
+    // Ball (white circle)
+    ctx.fillStyle = COLOR_BALL;
+    ctx.beginPath();
+    ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Player score
+    ctx.fillStyle = COLOR_TEXT;
+    ctx.font = '35px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(playerScore.toString(), COURT_WIDTH / 4, COURT_HEIGHT / 5);
+
+    // AI score
+    ctx.fillText(aiScore.toString(), COURT_WIDTH * 3 / 4, COURT_HEIGHT / 5);
 }
 
 function startGameLoop() {
