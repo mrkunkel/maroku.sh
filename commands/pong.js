@@ -29,10 +29,8 @@ let animationId = null;
 let isPaused = false;
 let playerY, aiY, ballX, ballY, ballVX, ballVY, ballSpeed;
 let playerScore, aiScore;
-let onExitCallback = null;
 
 export function execute(args, container, onExit) {
-    onExitCallback = onExit;
 
     // Centering wrapper
     const wrapper = document.createElement('div');
@@ -110,7 +108,6 @@ export function onExit() {
         cancelAnimationFrame(animationId);
         animationId = null;
     }
-    if (onExitCallback) onExitCallback();
 }
 
 function initGame() {
