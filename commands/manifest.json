@@ -6,5 +6,6 @@
   { "name": "tetris", "type": "app", "desc": "A classic block-stacking game" },
   { "name": "uname", "type": "command", "desc": "Print system information" },
   { "name": "whoami", "type": "command", "desc": "Print current user" },
-  { "name": "pong", "type": "app", "desc": "A classic Pong game" }
+  { "name": "pong", "type": "app", "desc": "A classic Pong game" },
+  { "name": "invaders", "type": "app", "desc": "A classic Space Invaders game" }
 ]
