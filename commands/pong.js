@@ -119,6 +119,20 @@ function update() {
     ballX += ballVX;
     ballY += ballVY;
 
+    // Player paddle collision (left side)
+    if (ballVX < 0 && ballX - BALL_RADIUS <= PADDLE_WIDTH &&
+        ballX + BALL_RADIUS >= 0 &&
+        ballY >= playerY && ballY <= playerY + PADDLE_HEIGHT) {
+        handlePaddleHit(1, playerY);
+    }
+
+    // AI paddle collision (right side)
+    if (ballVX > 0 && ballX + BALL_RADIUS >= COURT_WIDTH - PADDLE_WIDTH &&
+        ballX - BALL_RADIUS <= COURT_WIDTH &&
+        ballY >= aiY && ballY <= aiY + PADDLE_HEIGHT) {
+        handlePaddleHit(-1, aiY);
+    }
+
     // Top wall bounce
     if (ballY - BALL_RADIUS <= 0) {
         ballY = BALL_RADIUS;  // Position correction — clamp inside
@@ -130,6 +144,23 @@ function update() {
         ballY = COURT_HEIGHT - BALL_RADIUS;  // Position correction — clamp inside
         ballVY = -ballVY;
     }
+}
+
+function handlePaddleHit(direction, paddleY) {
+    // Normalize hit position: -1 (bottom edge) to +1 (top edge) relative to paddle center
+    const relativeY = ((paddleY + PADDLE_HEIGHT / 2) - ballY) / (PADDLE_HEIGHT / 2);
+    const clampedY = Math.max(-1, Math.min(1, relativeY));
+
+    // Outgoing angle = clampedY * π/4 (max ±45° from horizontal)
+    const angle = clampedY * (Math.PI / 4);
+
+    // Ball always travels away from the paddle that was hit
+    // Note: canvas Y axis is flipped, so ballVY uses negative sign
+    ballVX = direction * ballSpeed * Math.cos(angle);
+    ballVY = -ballSpeed * Math.sin(angle);
+
+    // Increase speed
+    ballSpeed += BALL_SPEED_INCREMENT;
 }
 
 function draw() {
