@@ -32,6 +32,10 @@ export function execute(args, container, onExit) {
     const boardWidth = COLS * BLOCK_SIZE;
     const boardHeight = ROWS * BLOCK_SIZE;
 
+    // Centering wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
+
     // Create background canvas for static elements
     bgCanvas = document.createElement('canvas');
     bgCanvas.width = boardWidth + PANEL_WIDTH;
@@ -43,8 +47,10 @@ export function execute(args, container, onExit) {
     canvas = document.createElement('canvas');
     canvas.width = boardWidth + PANEL_WIDTH;
     canvas.height = boardHeight;
-    canvas.style.cssText = 'display:block;margin:20px auto 0;';
-    container.appendChild(canvas);
+    canvas.style.cssText = 'display:block;';
+    wrapper.appendChild(canvas);
+
+    container.appendChild(wrapper);
 
     ctx = canvas.getContext('2d');
     showPreview = true;

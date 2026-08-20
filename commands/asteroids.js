@@ -498,16 +498,25 @@ function gameLoop() {
 export function execute(args, container, onExit) {
     onExitCallback = onExit;
 
-    const heading = document.createElement('h1');
-    heading.style.cssText = 'color:#FFF;font-family:monospace;font-size:18px;margin:10px 0;text-align:center;';
-    heading.textContent = 'ASTEROIDS';
-    container.appendChild(heading);
+    // Centering wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
 
+    // Heading
+    const heading = document.createElement('h1');
+    heading.style.cssText = 'color:#FFF;font-family:monospace;font-size:32px;margin:0 0 10px 0;';
+    heading.textContent = 'ASTEROIDS';
+    wrapper.appendChild(heading);
+
+    // Canvas
     canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
     canvas.style.cssText = 'background:' + COLOR_BG + ';border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
-    container.appendChild(canvas);
+    wrapper.appendChild(canvas);
+
+    container.appendChild(wrapper);
+
     ctx = canvas.getContext('2d');
 
     initGame();

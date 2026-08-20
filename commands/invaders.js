@@ -119,19 +119,25 @@ let isMouseDown = false;
 let handleMouseDown, handleMouseUp;
 
 export function execute(args, container) {
+    // Centering wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
+
     // Heading
     const heading = document.createElement('h1');
     heading.id = 'invaders-heading';
-    heading.style.cssText = 'color:' + COLOR_TEXT + ';font-size:32px;margin:20px 0 10px 0;font-family:monospace;';
+    heading.style.cssText = 'color:' + COLOR_TEXT + ';font-size:32px;margin:0 0 10px 0;font-family:monospace;';
     heading.textContent = 'SPACE INVADERS';
-    container.appendChild(heading);
+    wrapper.appendChild(heading);
 
     // Canvas
     canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
-    canvas.style.cssText = 'background:' + COLOR_BG + ';border:4px solid ' + COLOR_BORDER + ';box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;margin:0 auto;';
-    container.appendChild(canvas);
+    canvas.style.cssText = 'background:' + COLOR_BG + ';border:4px solid ' + COLOR_BORDER + ';box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;';
+    wrapper.appendChild(canvas);
+
+    container.appendChild(wrapper);
 
     ctx = canvas.getContext('2d');
 
