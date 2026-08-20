@@ -61,6 +61,16 @@ export function execute(container, onExit) {
 
     container.appendChild(canvasWrapper);
 
+    // Mouse wheel control — listen on window, not just canvas
+    window.addEventListener('wheel', (e) => {
+        if (isPaused) return;
+        e.preventDefault();
+        playerY += e.deltaY * 0.15;
+        // Clamp to court
+        if (playerY < 0) playerY = 0;
+        if (playerY + PADDLE_HEIGHT > COURT_HEIGHT) playerY = COURT_HEIGHT - PADDLE_HEIGHT;
+    }, { passive: false });
+
     // Instructions
     const instructions = document.createElement('p');
     instructions.style.cssText = 'color:' + COLOR_INSTRUCTIONS + ';font-size:14px;margin:10px 0 0 0;';
