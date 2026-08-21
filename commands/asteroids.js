@@ -47,6 +47,7 @@ const INITIAL_ASTEROIDS = 4;
 
 // Game state variables
 let canvas, ctx;
+let removeCleanupFn;
 let animationId = null;
 let gameState = 'playing';
 let score = 0;
@@ -497,11 +498,12 @@ function gameLoop() {
 // ===== MODULE EXPORTS =====
 
 export function execute(args, container, onExit) {
-    const { wrapper, heading, addCleanup } = createGameUI({
+    const { wrapper, heading, addCleanup, removeCleanup } = createGameUI({
         title: 'ASTEROIDS',
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
     });
+    removeCleanupFn = removeCleanup;
 
     // Canvas
     canvas = document.createElement('canvas');
@@ -541,5 +543,8 @@ export function onExit() {
     if (animationId) {
         cancelAnimationFrame(animationId);
         animationId = null;
+    }
+    if (removeCleanupFn) {
+        removeCleanupFn();
     }
 }

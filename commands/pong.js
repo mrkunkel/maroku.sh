@@ -24,6 +24,8 @@ const COLOR_INSTRUCTIONS = '#aaa';
 
 // Game state
 let canvas, ctx;
+let scoreDisplay;
+let removeCleanupFn;
 let animationId = null;
 let isPaused = false;
 let playerY, aiY, ballX, ballY, ballVX, ballVY, ballSpeed;
@@ -31,18 +33,19 @@ let playerScore, aiScore;
 
 export function execute(args, container, onExit) {
 
-    const { wrapper, heading, addCleanup } = createGameUI({
+    const { wrapper, heading, addCleanup, removeCleanup } = createGameUI({
         title: 'PONG',
         width: COURT_WIDTH,
         height: COURT_HEIGHT,
     });
+    removeCleanupFn = removeCleanup;
 
     // Rebuild wrapper: heading + score + canvas
     wrapper.innerHTML = '';
     wrapper.style.fontFamily = 'sans-serif';
 
     // Score display above canvas
-    const scoreDisplay = document.createElement('div');
+    scoreDisplay = document.createElement('div');
     scoreDisplay.style.cssText = 'color:#FFF;font-size:32px;font-weight:bold;margin:0 0 10px 0;letter-spacing:20px;';
     scoreDisplay.textContent = '0 - 0';
     wrapper.appendChild(scoreDisplay);
@@ -222,5 +225,8 @@ export function onExit() {
     if (animationId) {
         cancelAnimationFrame(animationId);
         animationId = null;
+    }
+    if (removeCleanupFn) {
+        removeCleanupFn();
     }
 }

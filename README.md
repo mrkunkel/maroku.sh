@@ -13,7 +13,7 @@ A browser-based terminal for performing network tasks and launching interactive 
 - `clear` - Clear the terminal screen
 - `help` - Show available commands
 - `exit` - Close this tab/window
-- Apps - Type an app name to launch it full-screen (e.g., `tetris`, `pong`, `tictactoe`, `invaders`, `asteroids`)
+- Apps - Type an app name to launch it full-screen (e.g., `tetris`, `pong`, `tictactoe`, `invaders`, `asteroids`, `chess`, `connect4`, `checkers`)
 
 ## Project Structure
 
@@ -34,6 +34,9 @@ commands/
   tictactoe.js      # App: Two-player tic-tac-toe
   invaders.js       # App: Space Invaders
   asteroids.js      # App: Asteroids
+  chess.js          # App: Two-player chess
+  connect4.js       # App: Two-player Connect 4
+  checkers.js       # App: Two-player checkers
 ```
 
 ## Adding a New App
