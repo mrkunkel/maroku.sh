@@ -50,7 +50,7 @@ export function execute(args, container, onExit) {
         }
     }
 
-    const canvasSize = 480;
+    const isMobile = !window.matchMedia('(hover: hover)').matches;
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;';
@@ -58,7 +58,13 @@ export function execute(args, container, onExit) {
     const heading = document.createElement('h1');
     heading.style.cssText = 'color:#FFF;font-family:monospace;font-size:32px;margin:0 0 10px 0;';
     heading.textContent = 'CHECKERS';
+    if (isMobile) heading.style.display = 'none';
     wrapper.appendChild(heading);
+
+    const avail = { width: window.innerWidth, height: window.innerHeight };
+    const headingHeight = isMobile ? 0 : 52;
+    const turnHeight = 40;
+    const canvasSize = Math.min(avail.width - 20, avail.height - headingHeight - turnHeight - 20);
 
     boardView = new EightByEightBoard({
         width: canvasSize,
@@ -81,6 +87,7 @@ export function execute(args, container, onExit) {
     canvasWrapper.style.cssText = 'position:relative;';
 
     boardView.setup(canvasWrapper);
+    boardView.resize(canvasSize, canvasSize);
     wrapper.appendChild(canvasWrapper);
     container.appendChild(wrapper);
 }

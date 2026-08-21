@@ -6,10 +6,8 @@ export const description = 'Two-player Connect 4 game';
 
 const ROWS = 6;
 const COLS = 7;
-const CELL_SIZE = 70;
-const BOARD_PADDING = Math.round(CELL_SIZE * 0.5);
-const CANVAS_WIDTH = COLS * CELL_SIZE + BOARD_PADDING * 2;
-const CANVAS_HEIGHT = ROWS * CELL_SIZE + BOARD_PADDING * 2 + 60;
+const STATUS_HEIGHT = 60;
+let CELL_SIZE, BOARD_PADDING, CANVAS_WIDTH, CANVAS_HEIGHT;
 
 const COLOR_BOARD = '#0044AA';
 const COLOR_BOARD_DOT = '#000';
@@ -34,31 +32,51 @@ let dropAnim = null;
 let winLine = null;
 
 export function execute(args, container, onExit) {
-    const { wrapper, heading, addCleanup, removeCleanup } = createGameUI({
+    const isMobile = !window.matchMedia('(hover: hover)').matches;
+    const { wrapper, heading, addCleanup, removeCleanup, hideHeading, getAvailableSize } = createGameUI({
         title: 'CONNECT 4',
-        width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
+        width: 700,
+        height: 600,
     });
     removeCleanupFn = removeCleanup;
+
+    // heading always shown
+
+    container.appendChild(wrapper);
+
+    const containerRect = container.getBoundingClientRect();
+    const headingHeight = heading.offsetHeight || 50;
+    const margin = 40;
+    CELL_SIZE = Math.min(
+        Math.floor((containerRect.width - margin * 2) / COLS),
+        Math.floor((containerRect.height - headingHeight - margin * 2 - STATUS_HEIGHT) / ROWS)
+    );
+    BOARD_PADDING = Math.round(CELL_SIZE * 0.5);
+    CANVAS_WIDTH = COLS * CELL_SIZE + BOARD_PADDING * 2;
+    CANVAS_HEIGHT = ROWS * CELL_SIZE + BOARD_PADDING * 2 + STATUS_HEIGHT;
 
     canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
-    canvas.style.cssText = 'background:' + COLOR_BOARD + ';border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;';
+    canvas.style.cssText = 'background:' + COLOR_BOARD + ';border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;width:' + CANVAS_WIDTH + 'px;height:' + CANVAS_HEIGHT + 'px;';
     wrapper.appendChild(canvas);
-
-    container.appendChild(wrapper);
 
     ctx = canvas.getContext('2d');
 
     initGame();
 
-    const mouseMoveHandler = (e) => handleMouseMove(e);
     const clickHandler = (e) => handleClick(e);
-    canvas.addEventListener('mousemove', mouseMoveHandler);
     canvas.addEventListener('click', clickHandler);
+
+    if (window.matchMedia('(hover: hover)').matches) {
+        const mouseMoveHandler = (e) => handleMouseMove(e);
+        canvas.addEventListener('mousemove', mouseMoveHandler);
+        addCleanup(() => {
+            canvas.removeEventListener('mousemove', mouseMoveHandler);
+        });
+    }
+
     addCleanup(() => {
-        canvas.removeEventListener('mousemove', mouseMoveHandler);
         canvas.removeEventListener('click', clickHandler);
     });
 

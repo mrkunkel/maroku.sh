@@ -56,5 +56,23 @@ export function createGameUI(options = {}) {
         cleanupFns.length = 0;
     }
 
-    return { wrapper, heading, addCleanup, removeCleanup };
+    function hideHeading() {
+        heading.style.display = 'none';
+    }
+
+    function getAvailableSize(container) {
+        if (container) {
+            const containerRect = container.getBoundingClientRect();
+            return {
+                width: containerRect.width,
+                height: containerRect.height - heading.offsetHeight,
+            };
+        }
+        return {
+            width: wrapper.clientWidth,
+            height: wrapper.clientHeight - heading.offsetHeight,
+        };
+    }
+
+    return { wrapper, heading, addCleanup, removeCleanup, hideHeading, getAvailableSize };
 }

@@ -23,17 +23,26 @@ let lastMove = null;
 let hoverCell = null;
 
 export function execute(args, container, onExit) {
-    const canvasSize = 450;
-    const { wrapper, heading, addCleanup } = createGameUI({
+    const isMobile = !window.matchMedia('(hover: hover)').matches;
+    const { wrapper, heading, addCleanup, hideHeading, getAvailableSize } = createGameUI({
         title: 'TIC TAC TOE',
-        width: canvasSize,
-        height: canvasSize,
+        width: 450,
+        height: 450,
     });
+
+    if (isMobile) {
+        hideHeading();
+    }
+
+    container.appendChild(wrapper);
+    const avail = getAvailableSize(container);
+    const turnIndicatorHeight = 40;
+    const canvasSize = Math.min(avail.width - 20, avail.height - 20 - turnIndicatorHeight);
 
     canvas = document.createElement('canvas');
     canvas.width = canvasSize;
     canvas.height = canvasSize;
-    canvas.style.cssText = 'background:#000;border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;';
+    canvas.style.cssText = 'background:#000;border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;width:' + canvasSize + 'px;height:' + canvasSize + 'px;';
     wrapper.appendChild(canvas);
 
     // Turn indicator
@@ -42,8 +51,6 @@ export function execute(args, container, onExit) {
     turnIndicator.style.cssText = 'color:#00FF00;font-size:20px;font-weight:bold;margin:10px 0 0 0;font-family:monospace;';
     turnIndicator.textContent = "X's turn";
     wrapper.appendChild(turnIndicator);
-
-    container.appendChild(wrapper);
 
     ctx = canvas.getContext('2d');
     cellSize = (canvasSize - CELL_PADDING * 2) / GRID_SIZE;

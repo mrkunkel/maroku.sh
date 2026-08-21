@@ -27,6 +27,15 @@ export class EightByEightBoard {
         this.render();
     }
 
+    resize(newWidth, newHeight) {
+        this.canvas.width = newWidth;
+        this.canvas.height = newHeight;
+        this.cellSize = newWidth / 8;
+        this.canvas.style.width = newWidth + 'px';
+        this.canvas.style.height = newHeight + 'px';
+        this.render();
+    }
+
     destroy() {
         if (this.handleClick && this.canvas) {
             this.canvas.removeEventListener('click', this.handleClick);
