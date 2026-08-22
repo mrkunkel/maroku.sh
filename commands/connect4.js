@@ -44,12 +44,11 @@ export function execute(args, container, onExit) {
 
     container.appendChild(wrapper);
 
-    const containerRect = container.getBoundingClientRect();
-    const headingHeight = heading.offsetHeight || 50;
+    const avail = getAvailableSize(container);
     const margin = 40;
     CELL_SIZE = Math.min(
-        Math.floor((containerRect.width - margin * 2) / COLS),
-        Math.floor((containerRect.height - headingHeight - margin * 2 - STATUS_HEIGHT) / ROWS)
+        Math.floor((avail.width - margin * 2) / (COLS + 1)),
+        Math.floor((avail.height - margin * 2 - STATUS_HEIGHT) / (ROWS + 1))
     );
     BOARD_PADDING = Math.round(CELL_SIZE * 0.5);
     CANVAS_WIDTH = COLS * CELL_SIZE + BOARD_PADDING * 2;
@@ -58,7 +57,7 @@ export function execute(args, container, onExit) {
     canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
-    canvas.style.cssText = 'background:' + COLOR_BOARD + ';border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;width:' + CANVAS_WIDTH + 'px;height:' + CANVAS_HEIGHT + 'px;';
+    canvas.style.cssText = 'background:' + COLOR_BOARD + ';border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;width:' + CANVAS_WIDTH + 'px;height:' + CANVAS_HEIGHT + 'px;box-sizing:border-box;';
     wrapper.appendChild(canvas);
 
     ctx = canvas.getContext('2d');

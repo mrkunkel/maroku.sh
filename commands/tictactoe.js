@@ -42,7 +42,7 @@ export function execute(args, container, onExit) {
     canvas = document.createElement('canvas');
     canvas.width = canvasSize;
     canvas.height = canvasSize;
-    canvas.style.cssText = 'background:#000;border:4px solid #FFF;box-shadow:0 0 20px rgba(255,255,255,0.15);display:block;cursor:pointer;width:' + canvasSize + 'px;height:' + canvasSize + 'px;';
+    canvas.style.cssText = 'background:#000;display:block;cursor:pointer;width:' + canvasSize + 'px;height:' + canvasSize + 'px;';
     wrapper.appendChild(canvas);
 
     // Turn indicator
