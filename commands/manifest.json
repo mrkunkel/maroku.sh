@@ -4,6 +4,7 @@
   { "name": "connect4", "type": "app", "desc": "Two-player Connect 4" },
   { "name": "checkers", "type": "app", "desc": "Two-player checkers" },
   { "name": "dig", "type": "command", "desc": "Look up DNS information for a host" },
+  { "name": "gorilla", "type": "app", "desc": "Throw bananas at gorillas on city buildings" },
   { "name": "ifconfig", "type": "command", "desc": "Show network interface configuration" },
   { "name": "invaders", "type": "app", "desc": "A classic Space Invaders game" },
   { "name": "ls", "type": "command", "desc": "List directory contents" },
